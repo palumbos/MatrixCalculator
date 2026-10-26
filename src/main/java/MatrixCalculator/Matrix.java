@@ -1,8 +1,8 @@
-package MatrixCauculator;
+package MatrixCalculator;
 
 /**
  * Represents a mathematical Matrix with double precision values.
- * Phase 1 implementation containing private attributes, dimension validation, and getters.
+ * Contains private attributes, dimension validation, getters, and core operations (addition, subtraction).
  */
 public class Matrix {
     private final int rows;
@@ -96,5 +96,54 @@ public class Matrix {
             throw new IndexOutOfBoundsException("Indices (" + row + ", " + col + ") are out of bounds for matrix of size " + rows + "x" + cols);
         }
         return data[row][col];
+    }
+
+    /**
+     * Adds another matrix to this matrix (element-wise addition).
+     * 
+     * @param other the matrix to add
+     * @return a new Matrix resulting from the addition
+     */
+    public Matrix add(Matrix other) {
+        return elementWiseOperation(other, true);
+    }
+
+    /**
+     * Subtracts another matrix from this matrix (element-wise subtraction).
+     * 
+     * @param other the matrix to subtract
+     * @return a new Matrix resulting from the subtraction
+     */
+    public Matrix subtract(Matrix other) {
+        return elementWiseOperation(other, false);
+    }
+
+    /**
+     * Helper method to perform element-wise addition or subtraction while adhering to DRY principles.
+     * 
+     * @param other the other matrix
+     * @param isAddition true for addition, false for subtraction
+     * @return resulting Matrix
+     */
+    private Matrix elementWiseOperation(Matrix other, boolean isAddition) {
+        if (other == null) {
+            throw new IllegalArgumentException("Cannot operate with a null matrix.");
+        }
+        if (this.rows != other.rows || this.cols != other.cols) {
+            String opName = isAddition ? "addition" : "subtraction";
+            throw new IllegalArgumentException(String.format(
+                "Matrix dimension mismatch for %s: (%dx%d) vs (%dx%d)",
+                opName, this.rows, this.cols, other.rows, other.cols
+            ));
+        }
+
+        Matrix result = new Matrix(this.rows, this.cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                result.data[i][j] = isAddition ? this.data[i][j] + other.data[i][j]
+                                              : this.data[i][j] - other.data[i][j];
+            }
+        }
+        return result;
     }
 }

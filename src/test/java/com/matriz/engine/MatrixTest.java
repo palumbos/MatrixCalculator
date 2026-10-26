@@ -1,13 +1,13 @@
 package com.matriz.engine;
 
-import MatrixCauculator.Matrix;
+import MatrixCalculator.Matrix;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for Matrix class.
- * Validates instantiation, dimension validations, and immutability via defensive copying.
+ * Validates instantiation, dimension validations, immutability, and arithmetic operations (addition, subtraction).
  */
 public class MatrixTest {
 
@@ -84,5 +84,59 @@ public class MatrixTest {
 
         // Matrix internal data should remain unchanged due to defensive copy in getter
         assertEquals(10.0, matrix.get(0, 0), 0.0001, "Matrix should be immune to modifications on retrieved data array");
+    }
+
+    @Test
+    void testMatrixAddition() {
+        Matrix a = new Matrix(new double[][]{
+            {1.0, 2.0},
+            {3.0, 4.0}
+        });
+        Matrix b = new Matrix(new double[][]{
+            {5.0, 6.0},
+            {7.0, 8.0}
+        });
+
+        Matrix result = a.add(b);
+
+        assertEquals(2, result.getRows());
+        assertEquals(2, result.getCols());
+        assertEquals(6.0, result.get(0, 0), 0.0001);
+        assertEquals(8.0, result.get(0, 1), 0.0001);
+        assertEquals(10.0, result.get(1, 0), 0.0001);
+        assertEquals(12.0, result.get(1, 1), 0.0001);
+    }
+
+    @Test
+    void testMatrixSubtraction() {
+        Matrix a = new Matrix(new double[][]{
+            {5.0, 7.0},
+            {9.0, 11.0}
+        });
+        Matrix b = new Matrix(new double[][]{
+            {1.0, 2.0},
+            {3.0, 4.0}
+        });
+
+        Matrix result = a.subtract(b);
+
+        assertEquals(2, result.getRows());
+        assertEquals(2, result.getCols());
+        assertEquals(4.0, result.get(0, 0), 0.0001);
+        assertEquals(5.0, result.get(0, 1), 0.0001);
+        assertEquals(6.0, result.get(1, 0), 0.0001);
+        assertEquals(7.0, result.get(1, 1), 0.0001);
+    }
+
+    @Test
+    void testArithmeticExceptions() {
+        Matrix a = new Matrix(new double[][]{{1.0, 2.0}, {3.0, 4.0}});
+        Matrix incompatible = new Matrix(new double[][]{{1.0, 2.0, 3.0}});
+
+        assertThrows(IllegalArgumentException.class, () -> a.add(null), "Adding null should throw IllegalArgumentException");
+        assertThrows(IllegalArgumentException.class, () -> a.subtract(null), "Subtracting null should throw IllegalArgumentException");
+
+        assertThrows(IllegalArgumentException.class, () -> a.add(incompatible), "Adding incompatible dimensions should throw IllegalArgumentException");
+        assertThrows(IllegalArgumentException.class, () -> a.subtract(incompatible), "Subtracting incompatible dimensions should throw IllegalArgumentException");
     }
 }
