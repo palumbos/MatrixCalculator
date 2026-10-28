@@ -1,8 +1,10 @@
 package MatrixCalculator;
 
+import MatrixCalculator.exception.MatrixDimensionException;
+
 /**
  * Represents a mathematical Matrix with double precision values.
- * Contains private attributes, dimension validation, getters, and core operations (addition, subtraction).
+ * Contains private attributes, dimension validation, getters, and core operations (addition, subtraction, multiplication, transpose).
  */
 public class Matrix {
     private final int rows;
@@ -17,7 +19,7 @@ public class Matrix {
      */
     public Matrix(int rows, int cols) {
         if (rows <= 0 || cols <= 0) {
-            throw new IllegalArgumentException("Matrix dimensions must be greater than zero. Provided: " + rows + "x" + cols);
+            throw new MatrixDimensionException("Matrix dimensions must be greater than zero. Provided: " + rows + "x" + cols);
         }
         this.rows = rows;
         this.cols = cols;
@@ -116,6 +118,67 @@ public class Matrix {
      */
     public Matrix subtract(Matrix other) {
         return elementWiseOperation(other, false);
+    }
+
+    /**
+     * Multiplies this matrix by another matrix (matrix multiplication).
+     * 
+     * @param other the matrix to multiply with
+     * @return a new Matrix resulting from the product
+     */
+    public Matrix multiply(Matrix other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Cannot multiply with a null matrix.");
+        }
+        if (this.cols != other.rows) {
+            throw new MatrixDimensionException(String.format(
+                "Incompatible dimensions for multiplication: (%dx%d) and (%dx%d)",
+                this.rows, this.cols, other.rows, other.cols
+            ));
+        }
+
+        Matrix result = new Matrix(this.rows, other.cols);
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < other.cols; j++) {
+                double sum = 0.0;
+                for (int k = 0; k < this.cols; k++) {
+                    sum += this.data[i][k] * other.data[k][j];
+                }
+                result.data[i][j] = sum;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Multiplies this matrix by a scalar value (scalar multiplication).
+     * 
+     * @param scalar the scalar value
+     * @return a new Matrix resulting from scalar multiplication
+     */
+    public Matrix multiply(double scalar) {
+        Matrix result = new Matrix(this.rows, this.cols);
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < this.cols; j++) {
+                result.data[i][j] = this.data[i][j] * scalar;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Computes the transpose of this matrix.
+     * 
+     * @return a new Matrix that is the transpose of this matrix
+     */
+    public Matrix transpose() {
+        Matrix result = new Matrix(this.cols, this.rows);
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < this.cols; j++) {
+                result.data[j][i] = this.data[i][j];
+            }
+        }
+        return result;
     }
 
     /**

@@ -129,14 +129,75 @@ public class MatrixTest {
     }
 
     @Test
+    void testMatrixMultiplication() {
+        // (2x3) * (3x2) = (2x2)
+        Matrix a = new Matrix(new double[][]{
+            {1.0, 2.0, 3.0},
+            {4.0, 5.0, 6.0}
+        });
+        Matrix b = new Matrix(new double[][]{
+            {7.0, 8.0},
+            {9.0, 1.0},
+            {2.0, 3.0}
+        });
+
+        Matrix result = a.multiply(b);
+
+        assertEquals(2, result.getRows());
+        assertEquals(2, result.getCols());
+        assertEquals(31.0, result.get(0, 0), 0.0001);
+        assertEquals(19.0, result.get(0, 1), 0.0001);
+        assertEquals(85.0, result.get(1, 0), 0.0001);
+        assertEquals(55.0, result.get(1, 1), 0.0001);
+    }
+
+    @Test
+    void testScalarMultiplication() {
+        Matrix a = new Matrix(new double[][]{
+            {1.0, -2.0},
+            {3.0, 4.5}
+        });
+
+        Matrix result = a.multiply(2.0);
+
+        assertEquals(2.0, result.get(0, 0), 0.0001);
+        assertEquals(-4.0, result.get(0, 1), 0.0001);
+        assertEquals(6.0, result.get(1, 0), 0.0001);
+        assertEquals(9.0, result.get(1, 1), 0.0001);
+    }
+
+    @Test
+    void testTranspose() {
+        // (2x3) matrix -> (3x2) transpose
+        Matrix a = new Matrix(new double[][]{
+            {1.0, 2.0, 3.0},
+            {4.0, 5.0, 6.0}
+        });
+
+        Matrix result = a.transpose();
+
+        assertEquals(3, result.getRows());
+        assertEquals(2, result.getCols());
+        assertEquals(1.0, result.get(0, 0), 0.0001);
+        assertEquals(4.0, result.get(0, 1), 0.0001);
+        assertEquals(2.0, result.get(1, 0), 0.0001);
+        assertEquals(5.0, result.get(1, 1), 0.0001);
+        assertEquals(3.0, result.get(2, 0), 0.0001);
+        assertEquals(6.0, result.get(2, 1), 0.0001);
+    }
+
+    @Test
     void testArithmeticExceptions() {
         Matrix a = new Matrix(new double[][]{{1.0, 2.0}, {3.0, 4.0}});
-        Matrix incompatible = new Matrix(new double[][]{{1.0, 2.0, 3.0}});
+        Matrix incompatibleAddSub = new Matrix(new double[][]{{1.0, 2.0, 3.0}});
+        Matrix incompatibleMul = new Matrix(new double[][]{{1.0, 2.0, 3.0}});
 
         assertThrows(IllegalArgumentException.class, () -> a.add(null), "Adding null should throw IllegalArgumentException");
         assertThrows(IllegalArgumentException.class, () -> a.subtract(null), "Subtracting null should throw IllegalArgumentException");
+        assertThrows(IllegalArgumentException.class, () -> a.multiply(null), "Multiplying null matrix should throw IllegalArgumentException");
 
-        assertThrows(IllegalArgumentException.class, () -> a.add(incompatible), "Adding incompatible dimensions should throw IllegalArgumentException");
-        assertThrows(IllegalArgumentException.class, () -> a.subtract(incompatible), "Subtracting incompatible dimensions should throw IllegalArgumentException");
+        assertThrows(MatrixDimensionException.class, () -> a.add(incompatibleAddSub), "Adding incompatible dimensions should throw MatrixDimensionException");
+        assertThrows(MatrixDimensionException.class, () -> a.subtract(incompatibleAddSub), "Subtracting incompatible dimensions should throw MatrixDimensionException");
+        assertThrows(MatrixDimensionException.class, () -> a.multiply(incompatibleMul), "Multiplying incompatible dimensions should throw MatrixDimensionException");
     }
 }
