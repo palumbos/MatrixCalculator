@@ -1,10 +1,11 @@
 package MatrixCalculator;
 
+import MatrixCalculator.decomposition.LUDecomposition;
 import MatrixCalculator.exception.MatrixDimensionException;
 
 /**
  * Represents a mathematical Matrix with double precision values.
- * Contains private attributes, dimension validation, getters, and core operations (addition, subtraction, multiplication, transpose).
+ * Contains private attributes, dimension validation, getters, and core operations (addition, subtraction, multiplication, transpose, determinant, solve, inverse, pow).
  */
 public class Matrix {
     private final int rows;
@@ -179,6 +180,101 @@ public class Matrix {
             }
         }
         return result;
+    }
+
+    /**
+     * Calculates the determinant of this matrix using LU decomposition.
+     * Matrix must be square.
+     * 
+     * @return determinant value
+     */
+    public double determinant() {
+        if (rows != cols) {
+            throw new MatrixDimensionException("Determinant can only be calculated for square matrices. Provided: " + rows + "x" + cols);
+        }
+        LUDecomposition lu = new LUDecomposition(this);
+        return lu.determinant();
+    }
+
+    /**
+     * Solves the linear system AX = B, where this matrix is A and rhs is B.
+     * 
+     * @param rhs right-hand side matrix B
+     * @return solution matrix X
+     */
+    public Matrix solve(Matrix rhs) {
+        if (rows != cols) {
+            throw new MatrixDimensionException("Linear system solving requires a square coefficient matrix A. Provided: " + rows + "x" + cols);
+        }
+        LUDecomposition lu = new LUDecomposition(this);
+        return lu.solve(rhs);
+    }
+
+    /**
+     * Computes the inverse of this matrix using LU decomposition.
+     * Matrix must be square and non-singular.
+     * 
+     * @return inverse Matrix
+     */
+    public Matrix inverse() {
+        if (rows != cols) {
+            throw new MatrixDimensionException("Matrix inversion requires a square matrix. Provided: " + rows + "x" + cols);
+        }
+        LUDecomposition lu = new LUDecomposition(this);
+        return lu.inverse();
+    }
+
+    /**
+     * Computes the power of this square matrix for a non-negative integer exponent.
+     * Exponent 0 returns the identity matrix.
+     * Exponent 1 returns an equivalent matrix.
+     * 
+     * @param exponent non-negative integer exponent
+     * @return resulting Matrix
+     */
+    public Matrix pow(int exponent) {
+        if (rows != cols) {
+            throw new MatrixDimensionException("Matrix exponentiation requires a square matrix. Provided: " + rows + "x" + cols);
+        }
+        if (exponent < 0) {
+            throw new IllegalArgumentException("Negative exponents are not supported in this version. Provided: " + exponent);
+        }
+
+        // Exponent 0: return identity matrix
+        if (exponent == 0) {
+            return identity(rows);
+        }
+
+        // Exponent 1: return a copy of this matrix
+        if (exponent == 1) {
+            return new Matrix(this.getData());
+        }
+
+        // Exponentiation by squaring
+        Matrix base = new Matrix(this.getData());
+        Matrix result = identity(rows);
+        int exp = exponent;
+
+        while (exp > 0) {
+            if ((exp & 1) == 1) {
+                result = result.multiply(base);
+            }
+            base = base.multiply(base);
+            exp >>= 1;
+        }
+
+        return result;
+    }
+
+    /**
+     * Helper to create an identity matrix of size n x n.
+     */
+    private static Matrix identity(int n) {
+        double[][] data = new double[n][n];
+        for (int i = 0; i < n; i++) {
+            data[i][i] = 1.0;
+        }
+        return new Matrix(data);
     }
 
     /**

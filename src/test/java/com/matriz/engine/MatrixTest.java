@@ -1,6 +1,8 @@
 package com.matriz.engine;
 
 import MatrixCalculator.Matrix;
+import MatrixCalculator.exception.MatrixDimensionException;
+import MatrixCalculator.exception.SingularMatrixException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -167,23 +169,125 @@ public class MatrixTest {
     }
 
     @Test
-    void testTranspose() {
-        // (2x3) matrix -> (3x2) transpose
+    void testDeterminant() {
+        // 2x2 matrix: det([ [4, 2], [1, 3] ]) = 4*3 - 2*1 = 10
+        Matrix m2 = new Matrix(new double[][]{
+            {4.0, 2.0},
+            {1.0, 3.0}
+        });
+        assertEquals(10.0, m2.determinant(), 0.0001);
+
+        // 3x3 matrix requiring partial pivoting
+        Matrix m3 = new Matrix(new double[][]{
+            {1.0, 2.0, 3.0},
+            {0.0, 1.0, 4.0},
+            {5.0, 6.0, 0.0}
+        });
+        // det = 1*(0 - 24) - 2*(0 - 20) + 3*(0 - 5) = -24 + 40 - 15 = 1
+        assertEquals(1.0, m3.determinant(), 0.0001);
+    }
+
+    @Test
+    void testLinearSystemSolve() {
+        // Solve AX = B
+        // A = [ [2, 1], [1, 3] ], B = [ [5], [5] ]
+        // Solution X = [ [2], [1] ] because 2(2)+1(1) = 5, 1(2)+3(1) = 5
         Matrix a = new Matrix(new double[][]{
+            {2.0, 1.0},
+            {1.0, 3.0}
+        });
+        Matrix b = new Matrix(new double[][]{
+            {5.0},
+            {5.0}
+        });
+
+        Matrix x = a.solve(b);
+
+        assertEquals(2, x.getRows());
+        assertEquals(1, x.getCols());
+        assertEquals(2.0, x.get(0, 0), 0.0001);
+        assertEquals(1.0, x.get(1, 0), 0.0001);
+    }
+
+    @Test
+    void testMatrixInverse() {
+        // A = [ [4, 7], [2, 6] ]
+        // det(A) = 24 - 14 = 10
+        // A^-1 = (1/10) * [ [6, -7], [-2, 4] ] = [ [0.6, -0.7], [-0.2, 0.4] ]
+        Matrix a = new Matrix(new double[][]{
+            {4.0, 7.0},
+            {2.0, 6.0}
+        });
+
+        Matrix inv = a.inverse();
+
+        assertEquals(0.6, inv.get(0, 0), 0.0001);
+        assertEquals(-0.7, inv.get(0, 1), 0.0001);
+        assertEquals(-0.2, inv.get(1, 0), 0.0001);
+        assertEquals(0.4, inv.get(1, 1), 0.0001);
+
+        // Verify A * A^-1 = I
+        Matrix product = a.multiply(inv);
+        assertEquals(1.0, product.get(0, 0), 0.0001);
+        assertEquals(0.0, product.get(0, 1), 0.0001);
+        assertEquals(0.0, product.get(1, 0), 0.0001);
+        assertEquals(1.0, product.get(1, 1), 0.0001);
+    }
+
+    @Test
+    void testMatrixPower() {
+        Matrix a = new Matrix(new double[][]{
+            {1.0, 2.0},
+            {3.0, 4.0}
+        });
+
+        // A^0 should be Identity
+        Matrix p0 = a.pow(0);
+        assertEquals(1.0, p0.get(0, 0), 0.0001);
+        assertEquals(0.0, p0.get(0, 1), 0.0001);
+        assertEquals(0.0, p0.get(1, 0), 0.0001);
+        assertEquals(1.0, p0.get(1, 1), 0.0001);
+
+        // A^1 should be A
+        Matrix p1 = a.pow(1);
+        assertEquals(1.0, p1.get(0, 0), 0.0001);
+        assertEquals(2.0, p1.get(0, 1), 0.0001);
+        assertEquals(3.0, p1.get(1, 0), 0.0001);
+        assertEquals(4.0, p1.get(1, 1), 0.0001);
+
+        // A^2 = A * A = [ [1*1 + 2*3, 1*2 + 2*4], [3*1 + 4*3, 3*2 + 4*4] ] = [ [7, 10], [15, 22] ]
+        Matrix p2 = a.pow(2);
+        assertEquals(7.0, p2.get(0, 0), 0.0001);
+        assertEquals(10.0, p2.get(0, 1), 0.0001);
+        assertEquals(15.0, p2.get(1, 0), 0.0001);
+        assertEquals(22.0, p2.get(1, 1), 0.0001);
+    }
+
+    @Test
+    void testSingularMatrixExceptions() {
+        // Singular matrix (row of zeros or proportional rows)
+        Matrix singular = new Matrix(new double[][]{
+            {1.0, 2.0},
+            {2.0, 4.0}
+        });
+
+        assertThrows(SingularMatrixException.class, () -> singular.determinant());
+        assertThrows(SingularMatrixException.class, () -> singular.inverse());
+        assertThrows(SingularMatrixException.class, () -> singular.solve(new Matrix(new double[][]{{1.0}, {1.0}})));
+    }
+
+    @Test
+    void testAdvancedDimensionExceptions() {
+        Matrix rectangular = new Matrix(new double[][]{
             {1.0, 2.0, 3.0},
             {4.0, 5.0, 6.0}
         });
 
-        Matrix result = a.transpose();
-
-        assertEquals(3, result.getRows());
-        assertEquals(2, result.getCols());
-        assertEquals(1.0, result.get(0, 0), 0.0001);
-        assertEquals(4.0, result.get(0, 1), 0.0001);
-        assertEquals(2.0, result.get(1, 0), 0.0001);
-        assertEquals(5.0, result.get(1, 1), 0.0001);
-        assertEquals(3.0, result.get(2, 0), 0.0001);
-        assertEquals(6.0, result.get(2, 1), 0.0001);
+        assertThrows(MatrixDimensionException.class, () -> rectangular.determinant());
+        assertThrows(MatrixDimensionException.class, () -> rectangular.inverse());
+        assertThrows(MatrixDimensionException.class, () -> rectangular.solve(new Matrix(new double[][]{{1.0}})));
+        assertThrows(MatrixDimensionException.class, () -> rectangular.pow(2));
+        assertThrows(IllegalArgumentException.class, () -> rectangular.pow(-1));
     }
 
     @Test
