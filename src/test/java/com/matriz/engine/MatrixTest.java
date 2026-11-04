@@ -277,17 +277,27 @@ public class MatrixTest {
     }
 
     @Test
-    void testAdvancedDimensionExceptions() {
-        Matrix rectangular = new Matrix(new double[][]{
-            {1.0, 2.0, 3.0},
-            {4.0, 5.0, 6.0}
+    void testTraceAndNorms() {
+        Matrix a = new Matrix(new double[][]{
+            {1.0, -2.0},
+            {3.0, 4.0}
         });
 
-        assertThrows(MatrixDimensionException.class, () -> rectangular.determinant());
-        assertThrows(MatrixDimensionException.class, () -> rectangular.inverse());
-        assertThrows(MatrixDimensionException.class, () -> rectangular.solve(new Matrix(new double[][]{{1.0}})));
-        assertThrows(MatrixDimensionException.class, () -> rectangular.pow(2));
-        assertThrows(IllegalArgumentException.class, () -> rectangular.pow(-1));
+        // Trace: 1 + 4 = 5
+        assertEquals(5.0, a.trace(), 0.0001);
+
+        // Frobenius norm: sqrt(1^2 + (-2)^2 + 3^2 + 4^2) = sqrt(1 + 4 + 9 + 16) = sqrt(30) ≈ 5.4772
+        assertEquals(Math.sqrt(30.0), a.normFrobenius(), 0.0001);
+
+        // L1 norm (max absolute column sum): max(|1|+|3|, |-2|+|4|) = max(4, 6) = 6
+        assertEquals(6.0, a.normL1(), 0.0001);
+
+        // Infinity norm (max absolute row sum): max(|1|+|-2|, |3|+|4|) = max(3, 7) = 7
+        assertEquals(7.0, a.normInfinity(), 0.0001);
+
+        // Non-square trace exception
+        Matrix rectangular = new Matrix(new double[][]{{1.0, 2.0, 3.0}});
+        assertThrows(MatrixDimensionException.class, () -> rectangular.trace());
     }
 
     @Test

@@ -278,6 +278,79 @@ public class Matrix {
     }
 
     /**
+     * Calculates the trace of this matrix (sum of main diagonal elements).
+     * Matrix must be square.
+     * 
+     * @return trace value
+     */
+    public double trace() {
+        if (rows != cols) {
+            throw new MatrixDimensionException("Trace can only be calculated for square matrices. Provided: " + rows + "x" + cols);
+        }
+        double sum = 0.0;
+        for (int i = 0; i < rows; i++) {
+            sum += data[i][i];
+        }
+        return sum;
+    }
+
+    /**
+     * Calculates the Frobenius norm of this matrix.
+     * ||A||_F = sqrt( sum_{i,j} |a_{ij}|^2 )
+     * 
+     * @return Frobenius norm
+     */
+    public double normFrobenius() {
+        double sumSquares = 0.0;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                sumSquares += data[i][j] * data[i][j];
+            }
+        }
+        return Math.sqrt(sumSquares);
+    }
+
+    /**
+     * Calculates the matrix L1 norm (maximum absolute column sum).
+     * ||A||_1 = max_j sum_i |a_{ij}|
+     * 
+     * @return L1 norm
+     */
+    public double normL1() {
+        double maxColSum = 0.0;
+        for (int j = 0; j < cols; j++) {
+            double colSum = 0.0;
+            for (int i = 0; i < rows; i++) {
+                colSum += Math.abs(data[i][j]);
+            }
+            if (colSum > maxColSum) {
+                maxColSum = colSum;
+            }
+        }
+        return maxColSum;
+    }
+
+    /**
+     * Calculates the matrix Infinity norm (maximum absolute row sum).
+     * ||A||_inf = max_i sum_j |a_{ij}|
+     * 
+     * @return Infinity norm
+     */
+    public double normInfinity() {
+        double maxRowSum = 0.0;
+        for (int i = 0; i < rows; i++) {
+            double rowSum = 0.0;
+            for (int j = 0; j < cols; j++) {
+                rowSum += Math.abs(data[i][j]);
+            }
+            if (rowSum > maxRowSum) {
+                maxRowSum = rowSum;
+            }
+        }
+        return maxRowSum;
+    }
+
+    /**
      * Helper method to perform element-wise addition or subtraction while adhering to DRY principles.
      * 
      * @param other the other matrix
