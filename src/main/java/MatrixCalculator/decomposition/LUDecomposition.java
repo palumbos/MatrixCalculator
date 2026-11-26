@@ -10,12 +10,11 @@ import MatrixCalculator.exception.SingularMatrixException;
  * L is a unit lower triangular matrix, and U is an upper triangular matrix.
  */
 public class LUDecomposition {
-    private static final double EPSILON = 1e-11;
-
     private final int n;
     private final double[][] lu;
     private final int[] piv;
     private int pivSign;
+    private final boolean singular;
 
     /**
      * Constructs an LU decomposition of the given square matrix.
@@ -31,11 +30,7 @@ public class LUDecomposition {
         }
 
         this.n = matrix.getRows();
-        double[][] srcData = matrix.getData();
-        this.lu = new double[n][n];
-        for (int i = 0; i < n; i++) {
-            System.arraycopy(srcData[i], 0, this.lu[i], 0, n);
-        }
+        this.lu = matrix.getData();
 
         this.piv = new int[n];
         for (int i = 0; i < n; i++) {
@@ -64,7 +59,7 @@ public class LUDecomposition {
                 luRowi[j] = colVector[i];
             }
 
-            // Find pivot and test for singularity
+            // Select the pivot with the largest absolute value.
             int p = j;
             double maxVal = Math.abs(colVector[j]);
             for (int i = j + 1; i < n; i++) {
@@ -89,19 +84,19 @@ public class LUDecomposition {
                 pivSign = -pivSign;
             }
 
-            // Check if pivot is too small (singular matrix)
-            if (Math.abs(lu[j][j]) < EPSILON) {
-                throw new SingularMatrixException("Matrix is singular (pivot is zero or near zero at index " + j + ").");
+            if (lu[j][j] == 0.0) {
+                singular = true;
+                return;
             }
 
             // Compute multipliers
             if (j < n - 1) {
-                double invPiv = 1.0 / lu[j][j];
                 for (int i = j + 1; i < n; i++) {
-                    lu[i][j] *= invPiv;
+                    lu[i][j] /= lu[j][j];
                 }
             }
         }
+        singular = false;
     }
 
     /**
@@ -110,6 +105,9 @@ public class LUDecomposition {
      * @return determinant value
      */
     public double determinant() {
+        if (singular) {
+            return 0.0;
+        }
         double det = pivSign;
         for (int j = 0; j < n; j++) {
             det *= lu[j][j];
@@ -122,6 +120,7 @@ public class LUDecomposition {
      * 
      * @param rhs the right-hand side matrix B
      * @return solution matrix X
+     * @throws SingularMatrixException if the decomposition encounters a zero pivot
      */
     public Matrix solve(Matrix rhs) {
         if (rhs == null) {
@@ -132,6 +131,10 @@ public class LUDecomposition {
                 "Row dimension mismatch in solve: matrix size is %dx%d, but RHS rows is %d",
                 n, n, rhs.getRows()
             ));
+        }
+
+        if (singular) {
+            throw new SingularMatrixException("Matrix is singular (LU decomposition encountered a zero pivot).");
         }
 
         int nx = rhs.getCols();
@@ -154,9 +157,8 @@ public class LUDecomposition {
 
         // Solve U * X = Y (Back substitution)
         for (int k = n - 1; k >= 0; k--) {
-            double invUkk = 1.0 / lu[k][k];
             for (int j = 0; j < nx; j++) {
-                xData[k][j] *= invUkk;
+                xData[k][j] /= lu[k][k];
             }
             for (int i = 0; i < k; i++) {
                 for (int j = 0; j < nx; j++) {

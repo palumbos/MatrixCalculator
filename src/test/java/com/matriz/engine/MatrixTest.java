@@ -47,16 +47,17 @@ public class MatrixTest {
     @Test
     void testInvalidDimensionsThrowException() {
         // Zero or negative dimensions
-        assertThrows(IllegalArgumentException.class, () -> new Matrix(0, 3), "Rows <= 0 should throw IllegalArgumentException");
-        assertThrows(IllegalArgumentException.class, () -> new Matrix(3, 0), "Cols <= 0 should throw IllegalArgumentException");
-        assertThrows(IllegalArgumentException.class, () -> new Matrix(-1, 3), "Negative rows should throw IllegalArgumentException");
-        assertThrows(IllegalArgumentException.class, () -> new Matrix(3, -2), "Negative cols should throw IllegalArgumentException");
+        assertThrows(MatrixDimensionException.class, () -> new Matrix(0, 3));
+        assertThrows(MatrixDimensionException.class, () -> new Matrix(3, 0));
+        assertThrows(MatrixDimensionException.class, () -> new Matrix(-1, 3));
+        assertThrows(MatrixDimensionException.class, () -> new Matrix(3, -2));
     }
 
     @Test
     void testInvalid2DArrayThrowException() {
         assertThrows(IllegalArgumentException.class, () -> new Matrix(null), "Null array should throw IllegalArgumentException");
         assertThrows(IllegalArgumentException.class, () -> new Matrix(new double[0][0]), "Empty array should throw IllegalArgumentException");
+        assertThrows(IllegalArgumentException.class, () -> new Matrix(new double[][]{null}));
         
         // Jagged array
         double[][] jaggedData = {
@@ -271,9 +272,28 @@ public class MatrixTest {
             {2.0, 4.0}
         });
 
-        assertThrows(SingularMatrixException.class, () -> singular.determinant());
+        assertEquals(0.0, singular.determinant());
         assertThrows(SingularMatrixException.class, () -> singular.inverse());
         assertThrows(SingularMatrixException.class, () -> singular.solve(new Matrix(new double[][]{{1.0}, {1.0}})));
+    }
+
+    @Test
+    void testSolveWithSubnormalPivots() {
+        double unit = Double.MIN_VALUE;
+        Matrix matrix = new Matrix(new double[][]{{unit, unit}, {unit, 2 * unit}});
+        Matrix rhs = new Matrix(new double[][]{{2 * unit}, {3 * unit}});
+
+        Matrix solution = matrix.solve(rhs);
+
+        assertEquals(1.0, solution.get(0, 0));
+        assertEquals(1.0, solution.get(1, 0));
+        assertEquals(1e-15, new Matrix(new double[][]{{1e-15}}).determinant());
+    }
+
+    @Test
+    void testFrobeniusNormAtExtremeScales() {
+        assertEquals(5e200, new Matrix(new double[][]{{3e200, 4e200}}).normFrobenius(), 1e185);
+        assertEquals(5e-200, new Matrix(new double[][]{{3e-200, 4e-200}}).normFrobenius(), 1e-215);
     }
 
     @Test

@@ -37,7 +37,13 @@ public class Matrix {
         if (data == null) {
             throw new IllegalArgumentException("Matrix data cannot be null.");
         }
-        if (data.length == 0 || data[0].length == 0) {
+        if (data.length == 0) {
+            throw new IllegalArgumentException("Matrix dimensions cannot be zero.");
+        }
+        if (data[0] == null) {
+            throw new IllegalArgumentException("Row 0 cannot be null.");
+        }
+        if (data[0].length == 0) {
             throw new IllegalArgumentException("Matrix dimensions cannot be zero.");
         }
 
@@ -186,7 +192,7 @@ public class Matrix {
      * Calculates the determinant of this matrix using LU decomposition.
      * Matrix must be square.
      * 
-     * @return determinant value
+     * @return determinant value, or zero if LU decomposition encounters a zero pivot
      */
     public double determinant() {
         if (rows != cols) {
@@ -301,13 +307,13 @@ public class Matrix {
      * @return Frobenius norm
      */
     public double normFrobenius() {
-        double sumSquares = 0.0;
+        double norm = 0.0;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                sumSquares += data[i][j] * data[i][j];
+                norm = Math.hypot(norm, data[i][j]);
             }
         }
-        return Math.sqrt(sumSquares);
+        return norm;
     }
 
     /**
@@ -363,7 +369,7 @@ public class Matrix {
         }
         if (this.rows != other.rows || this.cols != other.cols) {
             String opName = isAddition ? "addition" : "subtraction";
-            throw new IllegalArgumentException(String.format(
+            throw new MatrixDimensionException(String.format(
                 "Matrix dimension mismatch for %s: (%dx%d) vs (%dx%d)",
                 opName, this.rows, this.cols, other.rows, other.cols
             ));
